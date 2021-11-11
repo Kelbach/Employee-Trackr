@@ -2,12 +2,19 @@ const inquirer = require('inquirer');
 const db = require('./db/connection');
 const cTable = require('console.table');
 
-const init = () =>{
-    console.log(`Welcome to EmployeeTrackr. 
+const init = () => {
+    console.log(`  
+    Welcome to EmployeeTrackr. 
     This app will help you manage and view your employee database using inquirer and cTable.
-    Type Ctrl+C to quit at any time.`)
+    Type Ctrl+C to quit at any time.
+    `
+    );
 
-    return inquirer
+    options();
+};
+
+const options = () => {
+    inquirer
     .prompt([
         {
             type: 'list',
@@ -20,33 +27,42 @@ const init = () =>{
                 'Add a department',
                 'Add a role', 
                 'Add an employee', 
-                'Update an employee role',
+                'Update an employee role'
             ]
         }
-    ])
-    .then(({type}) => {
-        if (type === 'View all departments') {
-            //call depts using ctable
-            //call init
-        } if (type === 'View all roles') {
+    ]).then(({option}) => {
+        if (option === 'View all departments') {
+            const sql = `SELECT * FROM departments`;
+            db.query(sql, (err, rows) => {
+                if (err) {
+                  res.status(500).json({ error: err.message });
+                  return;
+                }
+                console.table(`
+
+                Grabbing departments....
+                `, rows);
+            });
+            options();
+        } else if (type === 'View all roles') {
             //call roles using ctable
             //call init
-        } if (type === 'View all employees') {
+        } else if (type === 'View all employees') {
             //call emps using ctable
             //call init
-        } if (type === 'Add a department') {
+        } else if (type === 'Add a department') {
             //ask (name)
             //INSERT dept into departments table 
             //call init
-        } if (type === 'Add a role') {
+        } else if (type === 'Add a role') {
             //ask (title, salary, department_id)
             //INSERT role into roles table 
             //call init
-        } if (type === 'Add an employee') {
+        } else if (type === 'Add an employee') {
             //ask (first_name, last_name, role_id, manager_id)
             //INSERT emp into employee table 
             //call init
-        } if (type === 'Update an employee role') {
+        } else if (type === 'Update an employee role') {
             //UPDATE existing emp
             //call init
         }
