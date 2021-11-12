@@ -2,18 +2,14 @@ const inquirer = require('inquirer');
 const db = require('./db/connection');
 const cTable = require('console.table');
 
-const init = () => {
-    console.log(`  
+console.log(`  
     Welcome to EmployeeTrackr. 
     This app will help you manage and view your employee database using inquirer and cTable.
     Type Ctrl+C to quit at any time.
     `
-    );
+);
 
-    options();
-};
-
-const options = () => {
+const init = () => {
     inquirer
     .prompt([
         {
@@ -33,40 +29,187 @@ const options = () => {
     ]).then(({option}) => {
         if (option === 'View all departments') {
             const sql = `SELECT * FROM departments`;
-            db.query(sql, (err, rows) => {
-                if (err) {
-                  res.status(500).json({ error: err.message });
-                  return;
+            return getData(sql);
+        } else if (option === 'View all roles') {
+            const sql = `SELECT * FROM roles`;
+            getData(sql);
+            //call init
+        } else if (option === 'View all employees') {
+            const sql = `SELECT * FROM employee`;
+            getData(sql);
+            //call init
+        } else if (option === 'Add a department') {
+            inquirer.prompt([{
+                type: 'input',
+                name: 'dept',
+                message: 'What is the name of the department?',
+                validate: nameInput => {
+                    if (nameInput) {
+                        return true;
+                    } else {
+                        console.log('Please enter a department name or type Ctrl+C to quit.');
+                        return false;
+                    }
                 }
-                console.table(`
-
-                Grabbing departments....
-                `, rows);
+            }]).then(({dept}) => {
+               postDept(dept);
+            })
+            //call init
+        } else if (option === 'Add a role') {
+            inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'title',
+                    message: 'What title does this role hold?',
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('Please enter a title or type Ctrl+C to quit.');
+                            return false;
+                        }
+                    }
+                },
+                {
+                    type: 'number',
+                    name: 'salary',
+                    message: 'How much is the salary for this title? (numbers only)',
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('Please enter a number or type Ctrl+C to quit.');
+                            return false;
+                        }
+                    }
+                },
+                {
+                    type: 'number',
+                    name: 'department_id',
+                    message: 'What is the department ID number?',
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('Please enter a department number or type Ctrl+C to quit.');
+                            return false;
+                        }
+                    }
+                }
+            ]).then(data => {
+                postRole(data);
             });
-            options();
-        } else if (type === 'View all roles') {
-            //call roles using ctable
             //call init
-        } else if (type === 'View all employees') {
-            //call emps using ctable
+        } else if (option === 'Add an employee') {
+            inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'first_name',
+                    message: "What is the employee's first name?",
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('Please enter the first name of the employee or type Ctrl+C to quit.');
+                            return false;
+                        }
+                    }
+                },
+                {
+                    type: 'input',
+                    name: 'last_name',
+                    message: "What is the employee's last name?",
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('Please enter the last name of the employee or type Ctrl+C to quit.');
+                            return false;
+                        }
+                    }
+                },
+                {
+                    type: 'number',
+                    name: 'role_id',
+                    message: 'What is the role ID number for this employee? (numbers only)',
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('Please enter a role ID number or type Ctrl+C to quit.');
+                            return false;
+                        }
+                    }
+                },
+                {
+                    type: 'number',
+                    name: 'manager_id',
+                    message: 'What is the manager ID number for this employee? (numbers only)',
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('Please enter a manager ID number or type Ctrl+C to quit.');
+                            return false;
+                        }
+                    }
+                }
+            ]).then(data => {
+                postEmp(data);
+            });
             //call init
-        } else if (type === 'Add a department') {
-            //ask (name)
-            //INSERT dept into departments table 
-            //call init
-        } else if (type === 'Add a role') {
-            //ask (title, salary, department_id)
-            //INSERT role into roles table 
-            //call init
-        } else if (type === 'Add an employee') {
-            //ask (first_name, last_name, role_id, manager_id)
-            //INSERT emp into employee table 
-            //call init
-        } else if (type === 'Update an employee role') {
+        } else if (option === 'Update an employee role') {
             //UPDATE existing emp
             //call init
         }
     })
+};
+
+async function getData(x){
+    db.query(x, function(err, rows) {
+        console.log(`
+        ...retrieving...
+        `)
+        console.table(rows);
+    });
+};
+
+async function postDept(x){
+    const sql = `INSERT INTO departments (dept_name)
+    VALUES (?);`;
+    db.query(sql, x, function() {
+        
+        console.log(`
+        ...posting...
+        `)
+        console.table('success');
+    });
+};
+
+async function postRole(x){
+    const sql = `INSERT INTO roles (title, salary, department_id)
+    VALUES (?,?,?);`;
+    const params = [x.title, x.salary, x.department_id];
+    db.query(sql, params, function() {
+        
+        console.log(`
+        ...posting...
+        `)
+        console.table('success');
+    });
+};
+
+async function postEmp(x){
+    const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+    VALUES (?,?,?,?);`;
+    const params = [x.first_name, x.last_name, x.role_id, x.manager_id];
+    db.query(sql, params, function() {
+        
+        console.log(`
+        ...posting...
+        `)
+        console.table('success');
+    });
 };
 
 init();
