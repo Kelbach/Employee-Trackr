@@ -29,7 +29,7 @@ const init = () => {
     ]).then(({option}) => {
         if (option === 'View all departments') {
             const sql = `SELECT * FROM departments`;
-            return getData(sql);
+            getData(sql);
         } else if (option === 'View all roles') {
             const sql = `SELECT * FROM roles`;
             getData(sql);
@@ -159,22 +159,51 @@ const init = () => {
             });
             //call init
         } else if (option === 'Update an employee role') {
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'empRoleUpdate',
+                    message: "What is the employee's new role",
+                    choices: []
+                }
+            ]).then(data => {
+                postEmp(data);
+            });
             //UPDATE existing emp
             //call init
         }
     })
 };
 
-async function getData(x){
-    db.query(x, function(err, rows) {
+function getData(x){
+    db.promise().query(x)
+    .then(([rows])=>{
         console.log(`
         ...retrieving...
-        `)
+        `);
         console.table(rows);
-    });
+    }).then(()=>init());
 };
 
-async function postDept(x){
+// function getData(x){
+//     db.query(x, function(err, rows) {
+//         console.log(`
+//         ...retrieving...
+//         `)
+//         console.table(rows);
+//     });
+// };
+
+// function getData(x){
+//     db.query(x, function(err, rows) {
+//         console.log(`
+//         ...retrieving...
+//         `)
+//         console.table(rows);
+//     });
+// };
+
+function postDept(x){
     const sql = `INSERT INTO departments (dept_name)
     VALUES (?);`;
     db.query(sql, x, function() {
@@ -186,7 +215,7 @@ async function postDept(x){
     });
 };
 
-async function postRole(x){
+function postRole(x){
     const sql = `INSERT INTO roles (title, salary, department_id)
     VALUES (?,?,?);`;
     const params = [x.title, x.salary, x.department_id];
@@ -199,7 +228,7 @@ async function postRole(x){
     });
 };
 
-async function postEmp(x){
+function postEmp(x){
     const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
     VALUES (?,?,?,?);`;
     const params = [x.first_name, x.last_name, x.role_id, x.manager_id];
