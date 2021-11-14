@@ -31,13 +31,11 @@ const init = () => {
             const sql = `SELECT * FROM departments`;
             getData(sql);
         } else if (option === 'View all roles') {
-            const sql = `SELECT * FROM roles`;
+            const sql = `SELECT roles.title, roles.id, departments.dept_name, roles.salary FROM roles INNER JOIN departments ON roles.department_id = departments.id`;
             getData(sql);
-            //call init
         } else if (option === 'View all employees') {
-            const sql = `SELECT * FROM employee`;
+            const sql = "SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary, departments.dept_name, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employee INNER JOIN roles ON employee.role_id=roles.id INNER JOIN departments ON roles.department_id=departments.id LEFT JOIN employee manager ON employee.manager_id = manager.id" ;
             getData(sql);
-            //call init
         } else if (option === 'Add a department') {
             inquirer.prompt([{
                 type: 'input',
@@ -53,8 +51,7 @@ const init = () => {
                 }
             }]).then(({dept}) => {
                postDept(dept);
-            })
-            //call init
+            });
         } else if (option === 'Add a role') {
             inquirer.prompt([
                 {
@@ -159,18 +156,7 @@ const init = () => {
             });
             //call init
         } else if (option === 'Update an employee role') {
-            inquirer.prompt([
-                {
-                    type: 'list',
-                    name: 'empRoleUpdate',
-                    message: "What is the employee's new role",
-                    choices: []
-                }
-            ]).then(data => {
-                postEmp(data);
-            });
-            //UPDATE existing emp
-            //call init
+            updateEmp()
         }
     })
 };
@@ -185,60 +171,70 @@ function getData(x){
     }).then(()=>init());
 };
 
-// function getData(x){
-//     db.query(x, function(err, rows) {
-//         console.log(`
-//         ...retrieving...
-//         `)
-//         console.table(rows);
-//     });
-// };
-
-// function getData(x){
-//     db.query(x, function(err, rows) {
-//         console.log(`
-//         ...retrieving...
-//         `)
-//         console.table(rows);
-//     });
-// };
-
 function postDept(x){
     const sql = `INSERT INTO departments (dept_name)
     VALUES (?);`;
-    db.query(sql, x, function() {
-        
-        console.log(`
-        ...posting...
-        `)
-        console.table('success');
-    });
+    db.promise().query(sql, x)
+    .then(console.log(`
+        ...posted...
+    `)).then(()=>init());
 };
 
 function postRole(x){
     const sql = `INSERT INTO roles (title, salary, department_id)
     VALUES (?,?,?);`;
     const params = [x.title, x.salary, x.department_id];
-    db.query(sql, params, function() {
-        
-        console.log(`
-        ...posting...
-        `)
-        console.table('success');
-    });
+    db.promise().query(sql, params)
+    .then(console.log(`
+        ...posted...
+    `)).then(()=>init());
 };
 
 function postEmp(x){
     const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
     VALUES (?,?,?,?);`;
     const params = [x.first_name, x.last_name, x.role_id, x.manager_id];
-    db.query(sql, params, function() {
-        
-        console.log(`
-        ...posting...
-        `)
-        console.table('success');
-    });
+    db.promise().query(sql, params)
+    .then(console.log(`
+        ...posted...
+    `)).then(()=>init());
 };
+
+// function updateEmp(){
+//     const sql = "SELECT*FROM employee" ;
+//     db.promise().query(sql).then(([rows])=>{
+//     const emps = rows.map(({ id, first_name, last_name })=>({
+//         name = first_name+last_name,
+//         value = id
+//     }));
+
+//     db.promise().query() //STUCK HERE
+//     const rol = rows.map(({ id, first_name, last_name })=>({
+//         name = first_name+last_name,
+//         value = id
+//     }));
+//         inquirer.prompt([
+//             {
+//                 type: 'list',
+//                 name: 'empChoice',
+//                 message: "Which employee would you like to update?",
+//                 choices: emps
+//             },
+//             {
+//                 type: 'list',
+//                 name: 'roleChoice',
+//                 message: "What role would you like them to have?",
+//                 choices: rol
+//             }
+//         ]).then(({empChoice}) => {
+//             sql = `UPDATE employee SET role_id = ? WHERE id = ?`
+//             param = empChoice.id
+//             db.promise().query(sql, param)
+//             .then(console.log(`
+//             ...posted...
+//         `)).then(()=>init());
+//         });
+//     })
+// }
 
 init();
