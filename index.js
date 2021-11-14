@@ -156,7 +156,7 @@ const init = () => {
             });
             //call init
         } else if (option === 'Update an employee role') {
-            updateEmp()
+            updateEmp();
         }
     })
 };
@@ -200,41 +200,65 @@ function postEmp(x){
     `)).then(()=>init());
 };
 
-// function updateEmp(){
-//     const sql = "SELECT*FROM employee" ;
-//     db.promise().query(sql).then(([rows])=>{
-//     const emps = rows.map(({ id, first_name, last_name })=>({
-//         name = first_name+last_name,
-//         value = id
-//     }));
+function updateEmp(){
+    const sqlA = "SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary, departments.dept_name, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employee INNER JOIN roles ON employee.role_id=roles.id INNER JOIN departments ON roles.department_id=departments.id LEFT JOIN employee manager ON employee.manager_id = manager.id" ;
+    db.promise().query(sqlA)
+    .then(([rows])=>{
+        console.log(`
+        `);
+        console.table(rows)   
+    });
+    const sqlB = `SELECT roles.title, roles.id, departments.dept_name, roles.salary FROM roles INNER JOIN departments ON roles.department_id = departments.id`;
+    db.promise().query(sqlB)
+    .then(([rows])=>{
+        console.log(`
+        `);
+        console.table(rows);
+        console.log(`
+            Please cross refer title with it's respective ID; use ID's from these tables...
+            `);
+    });
 
-//     db.promise().query() //STUCK HERE
-//     const rol = rows.map(({ id, first_name, last_name })=>({
-//         name = first_name+last_name,
-//         value = id
-//     }));
-//         inquirer.prompt([
-//             {
-//                 type: 'list',
-//                 name: 'empChoice',
-//                 message: "Which employee would you like to update?",
-//                 choices: emps
-//             },
-//             {
-//                 type: 'list',
-//                 name: 'roleChoice',
-//                 message: "What role would you like them to have?",
-//                 choices: rol
-//             }
-//         ]).then(({empChoice}) => {
-//             sql = `UPDATE employee SET role_id = ? WHERE id = ?`
-//             param = empChoice.id
-//             db.promise().query(sql, param)
-//             .then(console.log(`
-//             ...posted...
-//         `)).then(()=>init());
-//         });
-//     })
-// }
+    inquirer.prompt([
+        {
+            type: 'number',
+            name: 'empId',
+            message: "Please provide the ID number of the employee you would like to update?",
+            validate: numInput => {
+                if (numInput) {
+                    return true;
+                } else {
+                    console.log(`
+                    Please enter a number or type Ctrl+C to quit.
+                    `);
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'number',
+            name: 'roleId',
+            message: "Please provide the new Role ID number you would like them to have?",
+            validate: numInput => {
+                if (numInput) {
+                    return true;
+                } else {
+                    console.log(`
+                    Please enter a number or type Ctrl+C to quit.
+                    `);
+                    return false;
+                }
+            }
+        }
+    ])
+    .then(({empId,roleId}) => {
+        const sql = `UPDATE employee SET role_id = ${roleId} WHERE id = ${empId}`
+        db.promise().query(sql)
+        .then(console.log(`
+        ...posted...
+    `)).then(()=>init());
+    });
+    
+}
 
 init();
